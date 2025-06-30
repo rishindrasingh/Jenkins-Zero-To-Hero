@@ -5,6 +5,19 @@ pipeline {
       args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
     }
   }
+    environment {
+        PROJECT_ID = 'devopslearning-463313'
+        CLUSTER_NAME = 'gcp-usw2-seh-aio-gke-01'
+        CLUSTER_NAMESPACE = 'gcp-usw2-seh-test-namespace'
+        LOCATION = 'us-central1-a'
+        KUBE_CREDENTIALS_ID = 'sehpj-aio-gke-sa'
+        BRANCH = 'Test'
+        REPO_NAME = 'gcp-usw2-seh-test-registry-01'
+        APP_NAME = 'sehpj-test-ordering'
+        DEPLOYMENT_YAML = 'ordering.yml'
+        DEPLOYMENT_NAME = 'sehpj-test-ordering-app'
+        
+    }  
   stages {
     stage('Checkout') {
       steps {
@@ -29,6 +42,41 @@ pipeline {
         }
       }
     }
+	
+	stage('Artifact Registry Login'){
+		steps{
+		  script{
+			sh """
+			#!/bin/bash
+			
+			set -e
+			
+			GCLOUD_PROJECT='devopslearning'
+			GCLOUD=/tmp/google-cloud-sdk/bin/gcloud
+			
+			if gcloud version 2>&1 >> /dev/null; then
+				echo "GCloud SDK is already installed"
+			else
+				cd /tmp
+				wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-373.0.0-linux-x86_64.tar.gz -O cloud-sdk.tar.gz
+				tar -xzvf cloud-sdk.tar.gz
+			
+			fi
+			"""
+			withCredentials([file(credentialsId: 'gcp-artifact-cred', variable: 'saa')]) {
+				sh("/tmp/google-cloud-sdk/bin/gcloud auth activate-service-account --key-file=${saa}")
+			  }
+			sh "/tmp/google-cloud-sdk/bin/gcloud config set project ${PROJECT_ID}"
+			sh "/tmp/google-cloud-sdk/bin/gcloud auth configure-docker us-central1-docker.pkg.dev"
+			sh "/tmp/google-cloud-sdk/bin/gcloud artifacts repositories list"
+			sh "ln -sf /tmp/google-cloud-sdk/bin/docker-credential-gcloud /usr/local/bin/"
+			sh "ln -sf /tmp/google-cloud-sdk/bin/gcloud /usr/local/bin/"
+			#sh "/tmp/google-cloud-sdk/bin/gcloud container clusters get-credentials $CLUSTER_NAME --zone $LOCATION"
+			}
+			}
+	
+	}
+		
 	stage('Build and Push Docker Image to GCP Artifact Registry') {
 	  environment {
 		PROJECT_ID = 'devopslearning-463313'
