@@ -68,6 +68,7 @@ pipeline {
 			sh "/tmp/google-cloud-sdk/bin/gcloud artifacts repositories list"
 			sh "ln -sf /tmp/google-cloud-sdk/bin/docker-credential-gcloud /usr/local/bin/"
 			sh "ln -sf /tmp/google-cloud-sdk/bin/gcloud /usr/local/bin/"
+                       // sh "/tmp/google-cloud-sdk/bin/gcloud container clusters get-credentials $CLUSTER_NAME --zone $LOCATION"
 			}
 			}
 	
