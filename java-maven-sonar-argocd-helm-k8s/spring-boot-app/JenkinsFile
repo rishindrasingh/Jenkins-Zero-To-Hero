@@ -7,18 +7,15 @@ pipeline {
   }
     environment {
         PROJECT_ID = 'devopslearning-463313'
-        CLUSTER_NAME = 'gcp-usw2-seh-aio-gke-01'
-        CLUSTER_NAMESPACE = 'gcp-usw2-seh-test-namespace'
-        KUBE_CREDENTIALS_ID = 'sehpj-aio-gke-sa'
-        BRANCH = 'Test'
-        APP_NAME = 'sehpj-test-ordering'
-        DEPLOYMENT_YAML = 'ordering.yml'
-        DEPLOYMENT_NAME = 'sehpj-test-ordering-app'
+        BRANCH = 'rishindra'
 		REGION = 'us-central1'
 		REPO_NAME = 'poc-repo'
 		IMAGE_NAME = "spring-boot-app"
 		DOCKER_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${BUILD_NUMBER}"
 		GCP_CREDENTIALS = credentials('gcp-artifact-cred')
+        GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
+        GIT_USER_NAME = "rishindrasingh"
+		SONAR_URL = "http://34.61.52.37:9000"
         
     }  
   stages {
@@ -36,9 +33,6 @@ pipeline {
       }
     }
     stage('Static Code Analysis') {
-      environment {
-        SONAR_URL = "http://34.61.52.37:9000"
-      }
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
           sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
@@ -93,10 +87,6 @@ pipeline {
         }
 
     stage('Update Deployment File') {
-        environment {
-            GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
-            GIT_USER_NAME = "rishindrasingh"
-        }
         steps {
             withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
                 sh '''
