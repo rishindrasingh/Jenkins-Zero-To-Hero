@@ -9,13 +9,16 @@ pipeline {
         PROJECT_ID = 'devopslearning-463313'
         CLUSTER_NAME = 'gcp-usw2-seh-aio-gke-01'
         CLUSTER_NAMESPACE = 'gcp-usw2-seh-test-namespace'
-        LOCATION = 'us-central1-a'
         KUBE_CREDENTIALS_ID = 'sehpj-aio-gke-sa'
         BRANCH = 'Test'
-        REPO_NAME = 'gcp-usw2-seh-test-registry-01'
         APP_NAME = 'sehpj-test-ordering'
         DEPLOYMENT_YAML = 'ordering.yml'
         DEPLOYMENT_NAME = 'sehpj-test-ordering-app'
+		REGION = 'us-central1'
+		REPO_NAME = 'poc-repo'
+		IMAGE_NAME = "spring-boot-app"
+		DOCKER_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${BUILD_NUMBER}"
+		GCP_CREDENTIALS = credentials('gcp-artifact-cred')
         
     }  
   stages {
@@ -76,35 +79,18 @@ pipeline {
 	
 	}
 		
-	stage('Build and Push Docker Image to GCP Artifact Registry') {
-	  environment {
-		PROJECT_ID = 'devopslearning-463313'
-		REGION = 'us-central1'
-		REPO_NAME = 'poc-repo'
-		IMAGE_NAME = "spring-boot-app"
-		DOCKER_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${BUILD_NUMBER}"
-		GCP_CREDENTIALS = credentials('gcp-artifact-cred')
-	  }
-	  steps {
-		script {
-		  // Write credentials to a file
-		  writeFile file: 'gcp-key.json', text: "${GCP_CREDENTIALS}"
-
-		  // Authenticate with GCP
-		  sh '''
-			gcloud auth activate-service-account --key-file=gcp-key.json
-			gcloud auth configure-docker ${REGION}-docker.pkg.dev --quiet
-		  '''
-
-		  // Build and push Docker image
-		  sh '''
-			cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-			docker build -t ${DOCKER_IMAGE} .
-			docker push ${DOCKER_IMAGE}
-		  '''
-		}
-	  }
-	}
+        stage('Docker Image Build'){
+            steps{
+              script{
+								  // Build and push Docker image
+				  sh '''
+					cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+					docker build -t ${DOCKER_IMAGE} .
+					docker push ${DOCKER_IMAGE}
+				  '''
+            }
+            }
+        }
 
     stage('Update Deployment File') {
         environment {
