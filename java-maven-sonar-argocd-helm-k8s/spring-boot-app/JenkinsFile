@@ -2,7 +2,7 @@ pipeline {
   agent {
     docker {
       image 'rishindra2308/maven-docker-aws-agent:v1'
-      args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+      args '--user root -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
 
@@ -21,28 +21,26 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        sh 'echo passed'
-        git branch: "${BRANCH}", url: "https://github.com/rishindrasingh/Jenkins-Zero-To-Hero.git"
+        git branch: "${BRANCH}", url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git"
       }
     }
+
     stage('Build and Test') {
       steps {
-        sh 'ls -ltr'
-        // build the project and create a JAR file
         sh 'cd java-maven-sonar-argocd-helm-k8s/spring-boot-app && mvn clean package'
       }
     }
-  stage('Static Code Analysis') {
-        steps {
-          withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-            sh '''
-              #!/bin/bash
-              cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
-              mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}
-            '''
-          }
+
+    stage('Static Code Analysis') {
+      steps {
+        withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+          sh """
+            cd java-maven-sonar-argocd-helm-k8s/spring-boot-app
+            mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=$SONAR_URL
+          """
         }
       }
+    }
 
     stage('Build and Push Docker Image to ECR') {
       steps {
@@ -51,11 +49,10 @@ pipeline {
             script {
               try {
                 sh """
-                  #!/bin/bash
-                  /usr/local/bin/aws configure set aws_access_key_id ${AWS_CREDENTIALS_USR}
-                  /usr/local/bin/aws configure set aws_secret_access_key ${AWS_CREDENTIALS_PSW}
-                  /usr/local/bin/aws configure set default.region ${AWS_REGION}
-                  /usr/local/bin/aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                  aws configure set aws_access_key_id ${AWS_CREDENTIALS_USR}
+                  aws configure set aws_secret_access_key ${AWS_CREDENTIALS_PSW}
+                  aws configure set default.region ${AWS_REGION}
+                  aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}
                   docker build -t ${DOCKER_IMAGE} .
                   docker push ${DOCKER_IMAGE}
                 """
@@ -67,26 +64,6 @@ pipeline {
         }
       }
     }
-
-	stage('Update Deployment File') {
-	  steps {
-	    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-	      sh """
-	        set -e
-	        git config user.email "rishindrasingh23@gmail.com"
-	        git config user.name "Rishindra Singh"
-	        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-	        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-	        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-	        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:${BRANCH}
-	      """
-	    }
-	  }
-	}
-
-
-
-
   }
 
   post {
@@ -95,6 +72,30 @@ pipeline {
     }
     failure {
       echo '❌ Pipeline failed. Check logs for details.'
+    }
+  }
+}
+
+// This stage needs to run outside the Docker container (because of Git context)
+stage('Update Deployment File') {
+  agent any
+  environment {
+    GIT_USER_NAME = 'rishindrasingh'
+    GIT_REPO_NAME = 'Jenkins-Zero-To-Hero'
+    BRANCH = 'testing'
+  }
+  steps {
+    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+      sh """
+        set -e
+        git config user.email "rishindrasingh23@gmail.com"
+        git config user.name "Rishindra Singh"
+        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+        git push origin HEAD:${BRANCH}
+      """
     }
   }
 }
