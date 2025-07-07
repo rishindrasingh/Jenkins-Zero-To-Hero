@@ -5,6 +5,17 @@ pipeline {
       args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
     }
   }
+
+  environment {
+    SONAR_URL = "http://44.204.169.190:9000"
+    AWS_REGION = 'us-east-1'
+    ECR_REPO_NAME = 'spring-boot-demo'
+    ECR_REGISTRY = '977098990740.dkr.ecr.us-east-1.amazonaws.com'
+    DOCKER_IMAGE = "${ECR_REGISTRY}/${ECR_REPO_NAME}:${BUILD_NUMBER}"
+    GIT_USER_NAME = 'rishindrasingh'
+    GIT_REPO_NAME = 'Jenkins-Zero-To-Hero'
+  }
+
   stages {
     stage('Checkout') {
       steps {
