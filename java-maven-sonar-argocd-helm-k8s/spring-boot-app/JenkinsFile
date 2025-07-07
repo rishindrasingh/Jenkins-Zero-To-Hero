@@ -64,6 +64,25 @@ pipeline {
         }
       }
     }
+
+    // ✅ This stage runs outside Docker using agent any, but remains inside stages
+    stage('Update Deployment File') {
+      agent any
+      steps {
+        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+          sh """
+            set -e
+            git config user.email "rishindrasingh23@gmail.com"
+            git config user.name "Rishindra Singh"
+            sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+            git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
+            git push origin HEAD:${BRANCH}
+          """
+        }
+      }
+    }
   }
 
   post {
@@ -72,30 +91,6 @@ pipeline {
     }
     failure {
       echo '❌ Pipeline failed. Check logs for details.'
-    }
-  }
-}
-
-// This stage needs to run outside the Docker container (because of Git context)
-stage('Update Deployment File') {
-  agent any
-  environment {
-    GIT_USER_NAME = 'rishindrasingh'
-    GIT_REPO_NAME = 'Jenkins-Zero-To-Hero'
-    BRANCH = 'testing'
-  }
-  steps {
-    withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-      sh """
-        set -e
-        git config user.email "rishindrasingh23@gmail.com"
-        git config user.name "Rishindra Singh"
-        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-        git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-        git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-        git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git
-        git push origin HEAD:${BRANCH}
-      """
     }
   }
 }
