@@ -21,7 +21,7 @@ pipeline {
 
     stage('Clean Workspace') {
       steps {
-        deleteDir() // Deletes the current workspace contents
+        cleanWs() // Deletes the current workspace contents
       }
     }
 
