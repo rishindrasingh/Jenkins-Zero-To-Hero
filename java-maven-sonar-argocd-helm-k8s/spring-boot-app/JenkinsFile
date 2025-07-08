@@ -15,6 +15,7 @@ pipeline {
     GIT_USER_NAME = 'rishindrasingh'
     GIT_REPO_NAME = 'Jenkins-Zero-To-Hero'
     BRANCH = 'testing'
+    REPO_DIR = 'java-maven-sonar-argocd-helm-k8s'
   }
 
   stages {
@@ -66,24 +67,20 @@ pipeline {
     }
 
     stage('Update and Push Manifest') {
-      environment {
-        GIT_USER_NAME = "rishindrasingh23"
-        GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
-        MANIFEST_PATH = "java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml"
-      }
       steps {
-        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          sh """
-            git config user.email "rishindrasingh23@gmail.com"
-            git config user.name "Rishindra Singh"
-    
-            # Replace the image tag regardless of its current value
-            sed -i 's|image: abhishekf5/ultimate-cicd:.*|image: abhishekf5/ultimate-cicd:${BUILD_NUMBER}|' ${MANIFEST_PATH}
-    
-            git add ${MANIFEST_PATH}
-            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:${BRANCH}
-          """
+        dir("${REPO_DIR}") {
+          withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+            sh '''
+              git config user.email "rishindrasingh23@gmail.com"
+              git config user.name "Rishindra Singh"
+
+              sed -i 's|image: abhishekf5/ultimate-cicd:.*|image: abhishekf5/ultimate-cicd:'"$BUILD_NUMBER"'|' spring-boot-app-manifests/deployment.yml
+
+              git add spring-boot-app-manifests/deployment.yml
+              git commit -m "Update deployment image to version $BUILD_NUMBER"
+              git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME.git HEAD:$BRANCH
+            '''
+          }
         }
       }
     }
