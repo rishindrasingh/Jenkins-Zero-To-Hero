@@ -78,7 +78,7 @@ pipeline {
                     git config user.email "rishindrasingh23@gmail.com"
                     git config user.name "Rishindra Singh"
     
-                    sed -i "s#replaceImageTag#${BUILD_NUMBER}#g" ${REPO_DIR}/spring-boot-app-manifests/deployment.yml
+                    sed -i "s#abhishekf5/ultimate-cicd:.*#abhishekf5/ultimate-cicd:${BUILD_NUMBER}#g" ${REPO_DIR}/spring-boot-app-manifests/deployment.yml
     
                     git add ${REPO_DIR}/spring-boot-app-manifests/deployment.yml
                     git commit -m "Update deployment image to version ${BUILD_NUMBER}"
@@ -87,9 +87,6 @@ pipeline {
             }
         }
     }
-
-
-
 
   }
 
