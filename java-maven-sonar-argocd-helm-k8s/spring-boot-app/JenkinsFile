@@ -87,23 +87,29 @@ pipeline {
                 } 
         }
 
-    stage('Update Deployment File') {
-        steps {
-            withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-                sh '''
-				    
-                    set -e
-                    git config user.email "rishindrasingh23@gmail.com"
-                    git config user.name "Rishindra Singh"
-                    BUILD_NUMBER=${BUILD_NUMBER}
-                    sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                    git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
-                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:${BRANCH}
+	stage('Update Deployment File') {
+	    steps {
+	        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+	            sh '''
+	                set -e
+	                git config user.email "rishindrasingh23@gmail.com"
+	                git config user.name "Rishindra Singh"
+	
+	                # Always replace the image tag line
+	                sed -i "s|\\(image:.*spring-boot-app:\\).*|\\1${BUILD_NUMBER}|" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+	
+	                # Only commit and push if there are changes
+	                if git diff --quiet; then
+	                    echo "No changes detected, skipping commit."
+	                else
+	                    git add java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+	                    git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+	                    git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:${BRANCH}
+	                fi
+	            '''
+	        }
+	    }
+	}
 
-                '''
-            }
-        }
-    }
   }
 }
