@@ -69,23 +69,23 @@ pipeline {
     stage('Update and Push Manifest') {
       steps {
         withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
-          sh """
-            cd ${env.WORKSPACE}
-            git config user.email "rishindrasingh23@gmail.com"
-            git config user.name "Rishindra Singh"
+          script {
+            sh """
+              cd ${env.WORKSPACE}
+              git config user.email "rishindrasingh23@gmail.com"
+              git config user.name "Rishindra Singh"
     
-            cd ${REPO_DIR}
-            sed -i 's|image: abhishekf5/ultimate-cicd:.*|image: abhishekf5/ultimate-cicd:'"$BUILD_NUMBER"'|' spring-boot-app-manifests/deployment.yml
+              cd ${REPO_DIR}
+              sed -i 's|image: abhishekf5/ultimate-cicd:.*|image: abhishekf5/ultimate-cicd:${BUILD_NUMBER}|' spring-boot-app-manifests/deployment.yml
     
-            git add spring-boot-app-manifests/deployment.yml
-            git commit -m "Update deployment image to version $BUILD_NUMBER"
-            git push https://$GITHUB_TOKEN@github.com/$GIT_USER_NAME/$GIT_REPO_NAME.git HEAD:$BRANCH
-          """
+              git add spring-boot-app-manifests/deployment.yml
+              git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+              git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git HEAD:${BRANCH}
+            """
+          }
         }
       }
     }
-
-
 
   }
 
