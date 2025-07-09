@@ -96,7 +96,7 @@ pipeline {
 	                git config user.name "Rishindra Singh"
 	
 	                # Always replace the image tag line
-	                sed -i "s|\\(image:.*spring-boot-app:\\).*|\\1${BUILD_NUMBER}|" java-maven-sonar-argocd-helm-k8s/spring-boot-app-manifests/deployment.yml
+	                sed -i "s#abhishekf5/ultimate-cicd:.*#abhishekf5/ultimate-cicd:${BUILD_NUMBER}#g" ${REPO_DIR}/spring-boot-app-manifests/deployment.yml
 	
 	                # Only commit and push if there are changes
 	                if git diff --quiet; then
