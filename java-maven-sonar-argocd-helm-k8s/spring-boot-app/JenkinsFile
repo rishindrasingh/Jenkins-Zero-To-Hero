@@ -22,7 +22,8 @@ pipeline {
 
     stage('Checkout') {
       steps {
-        git branch: "${BRANCH}", url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git"
+        echo "Passed"
+        //git branch: "${BRANCH}", url: "https://github.com/${GIT_USER_NAME}/${GIT_REPO_NAME}.git"
       }
     }
 
