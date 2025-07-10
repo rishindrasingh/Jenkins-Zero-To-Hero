@@ -11,6 +11,7 @@ pipeline {
 	    REGION = 'us-central1'
 	    REPO_NAME = 'poc-repo'
 	    IMAGE_NAME = "spring-boot-app"
+            REPO_DIR = 'java-maven-sonar-argocd-helm-k8s'
 	    DOCKER_IMAGE = "${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/${IMAGE_NAME}:${BUILD_NUMBER}"
 	    GCP_CREDENTIALS = credentials('gcp-artifact-cred')
             GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
