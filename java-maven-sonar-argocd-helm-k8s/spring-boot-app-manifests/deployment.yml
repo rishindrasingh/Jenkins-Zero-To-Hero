@@ -1,3 +1,4 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -14,8 +15,17 @@ spec:
       labels:
         app: spring-boot-app
     spec:
+      imagePullSecrets:
+        - name: artifact-registry-secret
       containers:
-      - name: spring-boot-app
-        image: abhishekf5/ultimate-cicd:35
-        ports:
-        - containerPort: 8080
+        - name: spring-boot-app
+          image: us-central1-docker.pkg.dev/devopslearning-463313/poc-repo/spring-boot-app:5
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
