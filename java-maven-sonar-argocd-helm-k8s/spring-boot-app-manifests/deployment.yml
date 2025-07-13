@@ -19,7 +19,7 @@ spec:
         - name: artifact-registry-secret
       containers:
         - name: spring-boot-app
-          image: us-central1-docker.pkg.dev/devopslearning-463313/poc-repo/spring-boot-app:5
+          image: poc-repo/spring-boot-app:40
           ports:
             - containerPort: 8080
           resources:
